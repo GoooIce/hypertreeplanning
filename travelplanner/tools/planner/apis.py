@@ -1,6 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
 from langchain.prompts import PromptTemplate
 from agents.prompts import planner_agent_prompt, cot_planner_agent_prompt,slow_thinking_prompt, react_planner_agent_prompt,reflect_prompt,react_reflect_planner_agent_prompt,extract_value_prompt,\
       REFLECTION_HEADER, PLAN_CONVERT, THOUGHT_CONVERT
@@ -28,6 +29,7 @@ from func import remove_lines
 from sentence_transformers import SentenceTransformer
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+from hypertree import TravelHyperTree as HyperTree
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel, PeftConfig
@@ -389,68 +391,6 @@ class ReactReflectPlanner:
         self.env.reset()
 
 
-
-class HyperTree:
-    def __init__(self, value):
-        self.value = value
-        self.all = []
-        self.branch = None
-        self.children = []  
-    def show(self, depth=0):
-        result = '<Tab>' * depth + self.value + '\n'
-        for child in self.children:
-            result += child.show(depth + 1) 
-        return result
-    def is_terminal(self):
-        self.non_terminals = ["[Plan]", "[Transportation]", "[Taxi]", "[Self-driving]", "[Flight]",
-            "[Accommodation]", "[Attraction]", "[Dining]"]
-        self.terminals = ["[environment]", "[preference]", "[cost]", "[consistency]", 
-            "[house rule]", "[room type]", "[minimum stay]", "[cuisine]"]
-        node = self.value.lower()
-        if any(nt.lower() == node for nt in self.non_terminals):
-            return False
-        if any(t.lower() == node for t in self.terminals):
-            return True
-        wrong_patter = re.compile(r'\[(.*?)\]\s*(.*?)\s*\[(.*?)\]')
-        self.transportation_pattern = re.compile(r'\[transportation from [\w\s.]+ to [\w\s.]+\]', re.IGNORECASE)
-        self.accommodation_pattern = re.compile(r'\[accommodation for [\w\s.]+\]', re.IGNORECASE)
-        self.dining_pattern = re.compile(r'\[dining for [\w\s.]+\]', re.IGNORECASE)
-        self.attraction_pattern = re.compile(r'\[attraction for [\w\s.]+\]', re.IGNORECASE)
-        if wrong_patter.match(node):
-            return True
-        if self.transportation_pattern.match(node):
-            return False
-        elif self.accommodation_pattern.match(node):
-            return False
-        elif self.dining_pattern.match(node):
-            return False
-        elif self.attraction_pattern.match(node):
-            return True
-        return True
-    def is_leaf(self):
-        return len(self.children) == 0
-    def get_leaves(self):
-        leaves = []
-        if self.is_leaf():
-            leaves.append(self)
-        else:
-            for child in self.children:
-                leaves.extend(child.get_leaves())
-        return leaves
-    def postorder_traversal(self):
-        for child in self.children:
-            is_found = child.postorder_traversal()
-            if is_found:
-                return True
-        if self.branch == None:
-            return False
-        if self.branch+1 < len(self.all):
-            self.branch = self.branch+1
-            children_value_list=self.all[self.branch]
-            self.children = [HyperTree(value) for value in children_value_list]
-            return True
-        return False
-    
 
 
 class HTPlanner:

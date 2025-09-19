@@ -9,20 +9,7 @@ from langchain.schema import HumanMessage
 from prompt import fixed_dates_prompt,expansion_prompt,decision_prompt,plan_generation_prompt,plan_decision_prompt
 import math
 import re
-
-class HyperTree:
-    def __init__(self, value):
-        self.value = value 
-        self.all = []  
-        self.branch = None  
-        self.children = []  
-    def show(self, depth=0):
-        result = '<Tab>' * depth +self.value + '\n'
-        for child in self.children:
-            result += child.show(depth + 1) 
-        return result
-    def is_leaf(self):
-        return len(self.children) == 0
+from hypertree import HyperTree
 
 def convert_ai_message_to_dict(ai_message, threshold=0.1):
     logprobs_obj = ai_message.response_metadata['logprobs']
