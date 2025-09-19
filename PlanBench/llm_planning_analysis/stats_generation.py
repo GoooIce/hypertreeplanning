@@ -17,6 +17,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.font_manager import fontManager, FontProperties
 
+# Import the new summary generation module
+try:
+    from summary_generation import PlanBenchSummarizer
+except ImportError:
+    print("Warning: summary_generation module not found. Summary functionality will be limited.")
+
 #Download the font from https://fonts.google.com/specimen/Poppins
 path = "/home/local/ASURITE/kvalmeek/Poppins/Poppins-SemiBold.ttf"
 # path=''
@@ -580,12 +586,72 @@ def new_blocksworld_graphs():
     plt.close()
 
 
+def generate_comprehensive_summary():
+    """Generate comprehensive summary using the PlanBenchSummarizer."""
+    try:
+        summarizer = PlanBenchSummarizer("results")
+        print("\n" + "="*80)
+        print("COMPREHENSIVE PLANBENCH SUMMARY")
+        print("="*80)
+        
+        # Generate and display quick summary
+        summarizer.print_quick_summary()
+        
+        # Generate output files
+        print("\nGenerating output files...")
+        
+        # Export overall summary to JSON
+        overall_summary = summarizer.generate_overall_summary()
+        summarizer.export_summary_json(overall_summary, "summaries/overall_summary.json")
+        
+        # Export leaderboard to CSV
+        summarizer.export_leaderboard_csv("summaries/leaderboard.csv")
+        
+        # Export markdown report
+        summarizer.export_markdown_report("summaries/comprehensive_report.md")
+        
+        print("Summary generation completed!")
+        
+    except Exception as e:
+        print(f"Error generating comprehensive summary: {e}")
+        print("Falling back to basic summary...")
+        
+        # Fallback basic summary
+        print("\n" + "="*60)
+        print("BASIC PLANBENCH SUMMARY")
+        print("="*60)
+        
+        domains = ["mystery_blocksworld", "blocksworld", "obfuscated_randomized_blocksworld"]
+        models = ["o1-preview_chat", "o1-mini_chat", "llama-3.1-405b_aws", "gpt-4o_chat"]
+        tasks = ["task_1_plan_generation_zero_shot.json", "task_1_plan_generation.json"]
+        
+        for domain in domains:
+            print(f"\n{domain.upper()}:")
+            for model in models:
+                for task in tasks:
+                    file_path = f"results/{domain}/{model}/{task}"
+                    try:
+                        with open(file_path) as f:
+                            data = json.load(f)
+                        
+                        total = len(data["instances"])
+                        correct = sum(1 for inst in data["instances"] 
+                                    if inst.get("llm_correct", inst.get("correct", False)))
+                        accuracy = correct / total if total > 0 else 0
+                        
+                        print(f"  {model} - {task}: {correct}/{total} ({accuracy*100:.1f}%)")
+                    except FileNotFoundError:
+                        continue
+
 if __name__ == "__main__":
-    get_stats_graph()
+    # get_stats_graph()
     # reasoning_tokens_plan_length()
     # new_blocksworld_graphs()
     # obfuscated_randomized_blocksworld_reasoning_tokens_plan_length()
     # get_new_graphs_optimal_correct()
     # get_logistics_graphs()
+    
+    # Add summary generation to main execution
+    generate_comprehensive_summary()
 
     
