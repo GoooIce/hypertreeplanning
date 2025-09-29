@@ -190,10 +190,15 @@ class ResponseEvaluator:
                 total_correct += correct
                 total_instances += 1
                 self.save_json(structured_output, task_name)
-        # if self.verbose:
-        print(f"Total correct: {total_correct}")
+        # Always print summary statistics
+        accuracy = total_correct/total_instances if total_instances > 0 else 0
+        print(f"\n{'='*50}")
+        print(f"TASK SUMMARY: {task_name}")
+        print(f"{'='*50}")
         print(f"Total instances: {total_instances}")
-        print(f"Accuracy: {total_correct/total_instances}")
+        print(f"Correct instances: {total_correct}")
+        print(f"Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")
+        print(f"{'='*50}\n")
     
     def evaluate_plan_pddl(self, task_name):
         structured_output = self.load_json(task_name)
@@ -234,10 +239,20 @@ class ResponseEvaluator:
                 total_correct += correct
                 total_instances += 1
                 self.save_json(structured_output, task_name)
+        # Always print summary statistics
+        accuracy = total_correct/total_instances if total_instances > 0 else 0
+        print(f"\n{'='*50}")
+        print(f"TASK SUMMARY: {task_name}")
+        print(f"{'='*50}")
+        print(f"Total instances: {total_instances}")
+        print(f"Correct instances: {total_correct}")
+        print(f"Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")
+        print(f"{'='*50}\n")
+        
         if self.verbose:
-            print(f"Total correct: {total_correct}")
-            print(f"Total instances: {total_instances}")
-            print(f"Accuracy: {total_correct/total_instances}")
+            print(f"Verbose - Total correct: {total_correct}")
+            print(f"Verbose - Total instances: {total_instances}")
+            print(f"Verbose - Accuracy: {accuracy}")
     
     
 
